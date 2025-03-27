@@ -7,19 +7,19 @@ import PairCode from './components/PairCode';
 function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [isPaired, setIsPaired] = useState(false);
-  const [partnerId, setPartnerId] = useState<string>('');
+  const [partnerId, setPartnerId] = useState<string>("");
   const toast = useToast();
   
-  const serverUrl = process.env.NODE_ENV === 'production' 
-    ? 'http://139.155.97.94:3001'
-    : 'http://192.168.31.230:3001';
+  const serverUrl = process.env.NODE_ENV === "production" 
+    ? "http://139.155.97.94:3001"
+    : "http://192.168.31.230:3001";
 
   const socket = io(serverUrl, {
-    transports: ['websocket', 'polling'],
+    transports: ["websocket", "polling"],
     reconnection: true,
     reconnectionAttempts: 5,
     reconnectionDelay: 1000,
-    path: '/socket.io',
+    path: "/socket.io",
     withCredentials: true
   });
 
