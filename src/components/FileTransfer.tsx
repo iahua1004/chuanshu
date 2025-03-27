@@ -99,15 +99,15 @@ const FileTransfer = ({ socket, partnerId }: FileTransferProps) => {
     });
 
     // 监听offer
-    socket.on('offer', ({ target, offer }) => {
-      console.log('Received offer from:', target);
+    socket.on('offer', ({ offer }) => {
+      console.log('Received offer');
       if (peerConnection.current) {
         peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer))
           .then(() => peerConnection.current?.createAnswer())
           .then(answer => {
             if (peerConnection.current) {
               peerConnection.current.setLocalDescription(answer);
-              socket.emit('answer', { target, answer });
+              socket.emit('answer', { target: partnerId, answer });
             }
           })
           .catch(error => {
@@ -122,8 +122,8 @@ const FileTransfer = ({ socket, partnerId }: FileTransferProps) => {
     });
 
     // 监听answer
-    socket.on('answer', ({ target, answer }) => {
-      console.log('Received answer from:', target);
+    socket.on('answer', ({ answer }) => {
+      console.log('Received answer');
       if (peerConnection.current) {
         peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer))
           .catch(error => {
@@ -138,8 +138,8 @@ const FileTransfer = ({ socket, partnerId }: FileTransferProps) => {
     });
 
     // 监听ICE候选
-    socket.on('ice-candidate', ({ target, candidate }) => {
-      console.log('Received ICE candidate from:', target);
+    socket.on('ice-candidate', ({ candidate }) => {
+      console.log('Received ICE candidate');
       if (peerConnection.current) {
         peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate))
           .catch(error => {
