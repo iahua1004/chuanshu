@@ -98,44 +98,53 @@ const FileTransfer = ({ socket, partnerId }: FileTransferProps) => {
       });
     });
 
-    // 监听WebRTC信令
-    socket.on('offer', async ({ offer }) => {
-      console.log('Received offer');
-      try {
-        await pc.setRemoteDescription(new RTCSessionDescription(offer));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        socket.emit('answer', { target: partnerId, answer });
-      } catch (error) {
-        console.error('Error handling offer:', error);
-        toast({
-          title: '处理连接请求失败',
-          status: 'error',
-          duration: 3000,
-        });
+    // 监听offer
+    socket.on('offer', ({ target, offer }) => {
+      console.log('Received offer from:', target);
+      if (peerConnection.current) {
+        peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer))
+          .then(() => peerConnection.current?.createAnswer())
+          .then(answer => {
+            if (peerConnection.current) {
+              peerConnection.current.setLocalDescription(answer);
+              socket.emit('answer', { target, answer });
+            }
+          })
+          .catch(error => {
+            console.error('Error handling offer:', error);
+            toast({
+              title: '处理连接请求失败',
+              status: 'error',
+              duration: 3000,
+            });
+          });
       }
     });
 
-    socket.on('answer', async ({ answer }) => {
-      console.log('Received answer');
-      try {
-        await pc.setRemoteDescription(new RTCSessionDescription(answer));
-      } catch (error) {
-        console.error('Error handling answer:', error);
-        toast({
-          title: '处理连接响应失败',
-          status: 'error',
-          duration: 3000,
-        });
+    // 监听answer
+    socket.on('answer', ({ target, answer }) => {
+      console.log('Received answer from:', target);
+      if (peerConnection.current) {
+        peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer))
+          .catch(error => {
+            console.error('Error setting remote description:', error);
+            toast({
+              title: '设置远程描述失败',
+              status: 'error',
+              duration: 3000,
+            });
+          });
       }
     });
 
-    socket.on('ice-candidate', async ({ candidate }) => {
-      console.log('Received ICE candidate');
-      try {
-        await pc.addIceCandidate(new RTCIceCandidate(candidate));
-      } catch (error) {
-        console.error('Error adding ICE candidate:', error);
+    // 监听ICE候选
+    socket.on('ice-candidate', ({ target, candidate }) => {
+      console.log('Received ICE candidate from:', target);
+      if (peerConnection.current) {
+        peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate))
+          .catch(error => {
+            console.error('Error adding ICE candidate:', error);
+          });
       }
     });
 
