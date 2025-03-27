@@ -9,11 +9,18 @@ function App() {
   const [isPaired, setIsPaired] = useState(false);
   const [partnerId, setPartnerId] = useState<string>('');
   const toast = useToast();
-  const socket = io('http://192.168.31.230:3001', {
+  
+  // 根据环境选择服务器地址
+  const serverUrl = process.env.NODE_ENV === 'production' 
+    ? 'https://chuanshu-1uz6ap4ua-muzis-projects-1557bc4b.vercel.app'
+    : 'http://192.168.31.230:3001';
+
+  const socket = io(serverUrl, {
     transports: ['websocket', 'polling'],
     reconnection: true,
     reconnectionAttempts: 5,
-    reconnectionDelay: 1000
+    reconnectionDelay: 1000,
+    path: '/api/socket' // Vercel 环境下的 Socket.IO 路径
   });
 
   useEffect(() => {
