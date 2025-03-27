@@ -63,14 +63,14 @@ const FileTransfer = ({ socket, partnerId }: FileTransferProps) => {
     });
 
     // 监听WebRTC信令
-    socket.on('offer', async ({ from, offer }) => {
+    socket.on('offer', async ({ offer }) => {
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
-      socket.emit('answer', { target: from, answer });
+      socket.emit('answer', { target: partnerId, answer });
     });
 
-    socket.on('answer', async ({ from, answer }) => {
+    socket.on('answer', async ({ answer }) => {
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
     });
 

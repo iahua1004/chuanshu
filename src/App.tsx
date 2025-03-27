@@ -1,18 +1,11 @@
 import { ChakraProvider, Container, VStack, Heading } from '@chakra-ui/react';
 import { useState, useEffect } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 import PairCode from './components/PairCode';
 import FileTransfer from './components/FileTransfer';
 
-// 定义设备接口，用于类型检查
-interface Device {
-  id: string;      // 设备唯一标识符
-  name: string;    // 设备名称
-  socketId: string; // Socket.IO 连接ID
-}
-
-// 创建 Socket.IO 客户端连接，连接到本地服务器
-const socket = io('http://192.168.31.230:3001');
+// 创建 Socket.IO 客户端连接，使用相对路径连接到 Vercel API
+const socket = io();
 
 function App() {
   // 状态管理：配对状态、配对码和伙伴ID
