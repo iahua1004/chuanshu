@@ -99,10 +99,10 @@ const FileTransfer = ({ socket, partnerId }: FileTransferProps) => {
     });
 
     // 监听offer
-    socket.on('offer', ({ offer }) => {
+    socket.on('offer', (data: { offer: RTCSessionDescriptionInit }) => {
       console.log('Received offer');
       if (peerConnection.current) {
-        peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer))
+        peerConnection.current.setRemoteDescription(new RTCSessionDescription(data.offer))
           .then(() => peerConnection.current?.createAnswer())
           .then(answer => {
             if (peerConnection.current) {
@@ -122,10 +122,10 @@ const FileTransfer = ({ socket, partnerId }: FileTransferProps) => {
     });
 
     // 监听answer
-    socket.on('answer', ({ answer }) => {
+    socket.on('answer', (data: { answer: RTCSessionDescriptionInit }) => {
       console.log('Received answer');
       if (peerConnection.current) {
-        peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer))
+        peerConnection.current.setRemoteDescription(new RTCSessionDescription(data.answer))
           .catch(error => {
             console.error('Error setting remote description:', error);
             toast({
@@ -138,10 +138,10 @@ const FileTransfer = ({ socket, partnerId }: FileTransferProps) => {
     });
 
     // 监听ICE候选
-    socket.on('ice-candidate', ({ candidate }) => {
+    socket.on('ice-candidate', (data: { candidate: RTCIceCandidateInit }) => {
       console.log('Received ICE candidate');
       if (peerConnection.current) {
-        peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate))
+        peerConnection.current.addIceCandidate(new RTCIceCandidate(data.candidate))
           .catch(error => {
             console.error('Error adding ICE candidate:', error);
           });
