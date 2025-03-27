@@ -10,9 +10,8 @@ function App() {
   const [partnerId, setPartnerId] = useState<string>('');
   const toast = useToast();
   
-  // 根据环境选择服务器地址
   const serverUrl = process.env.NODE_ENV === 'production' 
-    ? 'https://chuanshu-1uz6ap4ua-muzis-projects-1557bc4b.vercel.app'
+    ? 'http://139.155.97.94:3001'
     : 'http://192.168.31.230:3001';
 
   const socket = io(serverUrl, {
@@ -20,14 +19,20 @@ function App() {
     reconnection: true,
     reconnectionAttempts: 5,
     reconnectionDelay: 1000,
-    path: '/api/socket' // Vercel 环境下的 Socket.IO 路径
+    path: '/socket.io',
+    withCredentials: true
   });
 
   useEffect(() => {
-    // 监听连接状态
     socket.on('connect', () => {
       console.log('Connected to server');
       setIsConnected(true);
+      socket.emit('generatePairCode');
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Connection error:', error);
+      setIsConnected(false);
     });
 
     socket.on('disconnect', () => {
@@ -35,7 +40,10 @@ function App() {
       setIsConnected(false);
     });
 
-    // 监听配对成功
+    socket.on('pairCode', (code: string) => {
+      console.log('Received pair code:', code);
+    });
+
     socket.on('pairSuccess', (partner: string) => {
       console.log('Pairing successful with:', partner);
       setPartnerId(partner);
@@ -49,7 +57,6 @@ function App() {
       });
     });
 
-    // 监听配对失败
     socket.on('pairError', (error: string) => {
       console.error('Pairing error:', error);
       toast({
@@ -63,7 +70,9 @@ function App() {
 
     return () => {
       socket.off('connect');
+      socket.off('connect_error');
       socket.off('disconnect');
+      socket.off('pairCode');
       socket.off('pairSuccess');
       socket.off('pairError');
     };
