@@ -15,7 +15,7 @@
   ],
   "routes": [
     {
-      "src": "/api/socket",
+      "src": "/socket.io/(.*)",
       "dest": "server.js"
     },
     {

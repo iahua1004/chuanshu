@@ -15,6 +15,7 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true');
   next();
 });
 
@@ -25,7 +26,8 @@ const io = new Server(server, {
     methods: ['GET', 'POST'],
     credentials: true
   },
-  transports: ['websocket', 'polling']
+  transports: ['websocket', 'polling'],
+  path: '/socket.io'
 });
 
 // 存储配对码
@@ -48,50 +50,22 @@ io.on('connection', (socket) => {
 
   // 验证配对码
   socket.on('verifyPairCode', (code) => {
-    console.log('Verifying pair code:', code, 'from socket:', socket.id);
-    const pairInfo = pairCodes.get(code);
-    if (pairInfo && Date.now() - pairInfo.timestamp < 300000) { // 5分钟内有效
-      const targetSocket = io.sockets.sockets.get(pairInfo.socketId);
-      
-      if (targetSocket) {
-        console.log('Pair success between', socket.id, 'and', pairInfo.socketId);
-        targetSocket.emit('pairSuccess', socket.id);
-        socket.emit('pairSuccess', pairInfo.socketId);
-        pairCodes.delete(code);
-      } else {
-        console.log('Target socket not found');
-        socket.emit('pairError', '目标设备已断开连接');
-      }
+    console.log('Verifying pair code:', code);
+    const pairData = pairCodes.get(code);
+    if (pairData && Date.now() - pairData.timestamp < 300000) { // 5分钟有效期
+      console.log('Pair code verified for socket:', socket.id);
+      socket.emit('pairSuccess', deviceId);
+      socket.to(pairData.socketId).emit('pairSuccess', socket.id);
+      pairCodes.delete(code);
     } else {
-      console.log('Invalid or expired pair code');
-      socket.emit('pairError', '配对码无效或已过期');
+      console.log('Invalid pair code:', code);
+      socket.emit('pairError', '无效的配对码或配对码已过期');
     }
   });
 
-  // 处理WebRTC信令
-  socket.on('offer', ({ target, offer }) => {
-    console.log('Forwarding offer from', socket.id, 'to', target);
-    io.to(target).emit('offer', { from: socket.id, offer });
-  });
-
-  socket.on('answer', ({ target, answer }) => {
-    console.log('Forwarding answer from', socket.id, 'to', target);
-    io.to(target).emit('answer', { from: socket.id, answer });
-  });
-
-  socket.on('ice-candidate', ({ target, candidate }) => {
-    console.log('Forwarding ICE candidate from', socket.id, 'to', target);
-    io.to(target).emit('ice-candidate', { from: socket.id, candidate });
-  });
-
+  // 处理断开连接
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
-    // 清理该socket相关的配对码
-    for (const [code, info] of pairCodes.entries()) {
-      if (info.socketId === socket.id) {
-        pairCodes.delete(code);
-      }
-    }
   });
 });
 
@@ -101,3 +75,6 @@ const PORT = process.env.PORT || 3001;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// 导出服务器实例
+export default server;
